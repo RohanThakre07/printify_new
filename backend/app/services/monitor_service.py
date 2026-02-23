@@ -8,8 +8,6 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from sqlalchemy.orm import Session
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
 
 from backend.app.models import ProcessedImage, ProductRun
 from backend.app.services.logger import log_event
@@ -17,27 +15,16 @@ from backend.app.services.logger import log_event
 ALLOWED_SUFFIXES = {".png", ".jpg", ".jpeg"}
 
 
-class NewImageHandler(FileSystemEventHandler):
-    def __init__(self, work_queue: queue.Queue[str]):
-        self.work_queue = work_queue
-
-    def on_created(self, event):
-        if event.is_directory:
-            return
-        path = Path(event.src_path)
-        if path.suffix.lower() in ALLOWED_SUFFIXES:
-            self.work_queue.put(str(path))
-
-
 class MonitorManager:
     def __init__(self, db_factory: Callable[[], Session], processor: Callable[[str], dict]):
         self.db_factory = db_factory
         self.processor = processor
-        self.observer: Optional[Observer] = None
         self.work_queue: queue.Queue[str] = queue.Queue()
         self.running = False
         self.current_file: Optional[str] = None
         self.worker_thread: Optional[threading.Thread] = None
+        self.poll_thread: Optional[threading.Thread] = None
+        self.watch_folder: Optional[str] = None
 
     def start(self, folder: str):
         if self.running:
@@ -45,6 +32,9 @@ class MonitorManager:
 
         folder_path = Path(folder)
         folder_path.mkdir(parents=True, exist_ok=True)
+
+        self.watch_folder = folder
+        self.running = True
 
         db = self.db_factory()
         try:
@@ -55,20 +45,14 @@ class MonitorManager:
         finally:
             db.close()
 
-        self.running = True
-        self.observer = Observer()
-        self.observer.schedule(NewImageHandler(self.work_queue), folder, recursive=False)
-        self.observer.start()
-
         self.worker_thread = threading.Thread(target=self._worker, daemon=True)
         self.worker_thread.start()
 
+        self.poll_thread = threading.Thread(target=self._poll_folder, daemon=True)
+        self.poll_thread.start()
+
     def stop(self):
         self.running = False
-        if self.observer:
-            self.observer.stop()
-            self.observer.join(timeout=5)
-            self.observer = None
 
     def enqueue_path(self, image_path: str):
         path = Path(image_path)
@@ -76,6 +60,14 @@ class MonitorManager:
             self.work_queue.put(str(path))
             return True
         return False
+
+    def _poll_folder(self):
+        while self.running and self.watch_folder:
+            folder = Path(self.watch_folder)
+            for file in folder.iterdir():
+                if file.is_file() and file.suffix.lower() in ALLOWED_SUFFIXES:
+                    self.work_queue.put(str(file))
+            time.sleep(3)  # Render-safe polling interval
 
     def _worker(self):
         while self.running:
@@ -86,6 +78,7 @@ class MonitorManager:
 
             self.current_file = image_path
             db = self.db_factory()
+
             try:
                 self._process_single(db, image_path)
             except Exception as exc:
@@ -123,6 +116,7 @@ class MonitorManager:
 
         time.sleep(0.5)
         file_hash = self._file_hash(path)
+
         existing = db.query(ProcessedImage).filter(ProcessedImage.file_hash == file_hash).first()
         if existing:
             return
@@ -136,6 +130,7 @@ class MonitorManager:
 
         try:
             result = self.processor(path)
+
             run.status = "done"
             run.success = True
             run.analysis_json = result.get("analysis_json")
@@ -146,6 +141,7 @@ class MonitorManager:
             processed.status = "done"
             processed.message = f"Draft product created: {run.printify_product_id}"
             log_event(db, "Product draft created successfully", "INFO", path)
+
         except Exception as exc:
             run.status = "error"
             run.success = False
