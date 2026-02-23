@@ -17,4 +17,12 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 app.include_router(router, prefix="/api")
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+import os
+from fastapi.staticfiles import StaticFiles
+
+if os.path.isdir("frontend"):
+    app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+
+@app.get("/api/health")
+def health():
+    return {"status": "ok"}
