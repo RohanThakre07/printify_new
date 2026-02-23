@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: printify-auto
+    env: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: python -m uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.10
+      - key: DATABASE_PATH
+        value: /tmp/app.db
+      - key: STORAGE_DIR
+        value: /tmp/data
+      - key: OLLAMA_MODEL
+        value: llama3.1:8b
