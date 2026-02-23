@@ -174,3 +174,35 @@ async def draft_uploaded(file: UploadFile = File(...), db: Session = Depends(get
 
     except Exception as e:
         raise HTTPException(500, str(e))
+
+
+# ---------------- SETTINGS ----------------
+
+
+@router.get("/settings")
+def get_settings(db: Session = Depends(get_db)):
+    return ConfigStore(db).get("settings", {})
+
+
+@router.post("/settings")
+def set_settings(payload: dict, db: Session = Depends(get_db)):
+    ConfigStore(db).set("settings", payload)
+    return {"ok": True}
+
+
+@router.post("/settings/reset")
+def reset_settings(db: Session = Depends(get_db)):
+    ConfigStore(db).set("settings", {})
+    return {"ok": True}
+
+
+# ---------------- MONITOR STATUS ----------------
+
+@router.get("/monitor/status")
+def monitor_status():
+    return {
+        "monitoring": False,
+        "watch_folder": "",
+        "queue_size": 0,
+        "current_file": None
+    }
