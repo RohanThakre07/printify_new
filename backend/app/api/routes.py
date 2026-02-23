@@ -83,55 +83,49 @@ def analyze_uploaded(file: UploadFile = File(...)):
 
 @router.post("/draft")
 def draft_uploaded(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    try:
+        temp_path = UPLOAD_DIR / file.filename
 
-    temp_path = UPLOAD_DIR / file.filename
+        with temp_path.open("wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-    with temp_path.open("wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        config = ConfigStore(db).get("settings", {})
 
-    config = ConfigStore(db).get("settings", {})
+        if not config.get("blueprint_id") or not config.get("print_provider_id"):
+            return {"error": "Blueprint ID or Print Provider ID missing in settings"}
 
-    if not config.get("blueprint_id") or not config.get("print_provider_id"):
-        raise HTTPException(400, "Blueprint & Provider missing in settings")
+        printify = get_printify_from_config(config)
 
-    printify = get_printify_from_config(config)
+        analysis = ai_service.analyze_image(str(temp_path))
+        listing = ai_service.generate_listing(analysis)
 
-    analysis = ai_service.analyze_image(str(temp_path))
-    listing = ai_service.generate_listing(analysis)
+        upload = printify.upload_image(str(temp_path))
+        variants = ensure_variant_selection(config, printify)
 
-    upload = printify.upload_image(str(temp_path))
+        description = f"{' '.join(listing['bullets'])}\n\n{listing['description']}"
 
-    variants = printify.get_variants(
-        int(config["blueprint_id"]),
-        int(config["print_provider_id"])
-    )[:100]
+        product = printify.create_draft_product(
+            title=listing["title"],
+            description=description,
+            tags=listing["tags"],
+            blueprint_id=int(config["blueprint_id"]),
+            provider_id=int(config["print_provider_id"]),
+            uploaded_image_id=upload["id"],
+            variants=variants,
+            mockup_ids=config.get("selected_mockups", []),
+        )
 
-    enabled_variants = [
-        {
-            "id": int(v["id"]),
-            "price": int(v.get("price", 1999)),
-            "is_enabled": True,
+        return {
+            "ok": True,
+            "printify_upload_id": upload.get("id"),
+            "printify_product_id": product.get("id")
         }
-        for v in variants
-    ]
 
-    description = f"{' '.join(listing['bullets'])}\n\n{listing['description']}"
-
-    product = printify.create_draft_product(
-        title=listing["title"],
-        description=description,
-        tags=listing["tags"],
-        blueprint_id=int(config["blueprint_id"]),
-        provider_id=int(config["print_provider_id"]),
-        uploaded_image_id=upload["id"],
-        variants=enabled_variants,
-        mockup_ids=[],
-    )
-
-    return {
-        "ok": True,
-        "printify_product_id": product.get("id")
-    }
+    except Exception as e:
+        return {
+            "error": "Draft creation failed",
+            "details": str(e)
+        }
 
 
 # ---------------- DASHBOARD ---------------- #
