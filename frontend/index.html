@@ -38,12 +38,14 @@
       <div class="grid2">
         <div class="panel">
           <h3>IMAGE UPLOAD</h3>
-          <label>Image file path (local):</label>
-          <input id="image_path" placeholder="C:\\images\\my-design.png" />
+
+          <label>Select Image:</label>
+          <input type="file" id="image_file" accept="image/png,image/jpeg" />
+
           <div class="row">
             <button class="primary" id="btn_analyze">ANALYZE IMAGE</button>
-            <button id="btn_queue">QUEUE FOR AUTO FLOW</button>
           </div>
+
           <button class="primary" id="btn_create">CREATE PRODUCT DRAFT</button>
           <p id="upload_status"></p>
         </div>
@@ -58,22 +60,19 @@
 
       <div class="panel mt">
         <h3>PRODUCT CONFIGURATION</h3>
-        <div class="row between align-center">
-          <label><input type="checkbox" id="copy_previous" /> Use same settings for next product</label>
-          <button id="btn_reset">RESET TO DEFAULT</button>
-        </div>
 
         <h4>PRICING</h4>
         <div class="row">
           <input id="base_price" type="number" step="0.01" placeholder="Fixed price e.g. 19.99" />
           <input id="profit_percent" type="number" step="0.1" placeholder="Profit margin % e.g. 30" />
         </div>
-        <p id="variant_limit" class="muted"></p>
+
         <div class="row">
           <button id="btn_fetch_variants">FETCH VARIANTS</button>
           <button id="btn_select_all">SELECT ALL</button>
           <button id="btn_clear_variants">DESELECT ALL</button>
         </div>
+
         <div id="variants" class="chips"></div>
 
         <h4>MOCKUPS / PRINT POSITIONS</h4>
@@ -84,7 +83,6 @@
 
     <section id="products" class="tab">
       <h1>PRODUCTS</h1>
-      <p class="subtitle">Processed images, draft IDs, and status</p>
       <div class="panel"><pre id="runs_json"></pre></div>
       <h2>LOGS</h2>
       <div class="panel"><pre id="logs_json"></pre></div>
@@ -92,31 +90,30 @@
 
     <section id="settings" class="tab">
       <h1>SETTINGS</h1>
-      <p class="subtitle">Configure API keys and automation settings</p>
+
       <div class="grid2">
         <div class="panel">
           <h3>PRINTIFY CREDENTIALS</h3>
           <label>API KEY</label>
-          <input id="printify_api_key" type="password" placeholder="Enter your Printify API key" />
+          <input id="printify_api_key" type="password" />
+
           <label>SHOP ID</label>
-          <input id="printify_shop_id" placeholder="Your Printify shop ID" />
+          <input id="printify_shop_id" />
         </div>
+
         <div class="panel">
           <h3>PRODUCT CONFIGURATION</h3>
           <label>BLUEPRINT ID</label>
-          <input id="blueprint_id" type="number" placeholder="e.g., 3" />
+          <input id="blueprint_id" type="number" />
+
           <label>PRINT PROVIDER ID</label>
-          <input id="print_provider_id" type="number" placeholder="e.g., 5" />
-          <label>WATCH FOLDER (Windows or local path)</label>
-          <input id="watch_folder" placeholder="C:\\folder\\to\\watch" />
+          <input id="print_provider_id" />
         </div>
       </div>
+
       <div class="row mt">
         <button class="primary" id="btn_save_settings">SAVE SETTINGS</button>
-        <button id="btn_monitor_start">START MONITORING</button>
-        <button id="btn_monitor_stop">STOP MONITORING</button>
       </div>
-      <p id="monitor_status"></p>
     </section>
   </main>
 
