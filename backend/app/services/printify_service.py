@@ -78,6 +78,7 @@ class PrintifyClient:
         variants: List[Dict],
         mockup_ids: List[str],
     ) -> Dict:
+
         enabled_variants = [
             {
                 "id": int(v["variant_id"]),
@@ -87,14 +88,18 @@ class PrintifyClient:
             for v in variants
             if v.get("enabled", True)
         ]
+
         if not enabled_variants:
             raise RuntimeError("No variants selected.")
 
         print_areas = self.get_print_areas(blueprint_id, provider_id)
+
         placeholders = []
+
         for area in print_areas:
             for p in area.get("placeholders", []):
                 position = p.get("position", "front")
+
                 if (not mockup_ids) or (position in mockup_ids):
                     placeholders.append(
                         {
@@ -104,7 +109,7 @@ class PrintifyClient:
                                     "id": uploaded_image_id,
                                     "x": 0.5,
                                     "y": 0.5,
-                                    "scale": 1,
+                                    "scale": 0.8,   # safer placement
                                     "angle": 0,
                                 }
                             ],
@@ -115,7 +120,15 @@ class PrintifyClient:
             placeholders = [
                 {
                     "position": "front",
-                    "images": [{"id": uploaded_image_id, "x": 0.5, "y": 0.5, "scale": 1, "angle": 0}],
+                    "images": [
+                        {
+                            "id": uploaded_image_id,
+                            "x": 0.5,
+                            "y": 0.5,
+                            "scale": 0.8,
+                            "angle": 0,
+                        }
+                    ],
                 }
             ]
 
@@ -132,6 +145,11 @@ class PrintifyClient:
                     "placeholders": placeholders,
                 }
             ],
-            "visible": False,
+            "is_visible": False,  # ensures DRAFT only
         }
-        return self._request("POST", f"/shops/{self.shop_id}/products.json", json=payload)
+
+        return self._request(
+            "POST",
+            f"/shops/{self.shop_id}/products.json",
+            json=payload
+        )
