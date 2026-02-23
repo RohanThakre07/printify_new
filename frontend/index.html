@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrintifyAuto</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="logo">PRINTIFY<span>AUTO</span></div>
+    <nav>
+      <button class="nav active" data-tab="dashboard">Dashboard</button>
+      <button class="nav" data-tab="upload">Upload & Analyze</button>
+      <button class="nav" data-tab="products">Products</button>
+      <button class="nav" data-tab="settings">Settings</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section id="dashboard" class="tab active">
+      <h1>DASHBOARD</h1>
+      <p class="subtitle">Printify product automation overview</p>
+      <div class="cards">
+        <div class="card"><span>Total Products</span><strong id="stat_total">0</strong></div>
+        <div class="card"><span>Draft Products</span><strong id="stat_draft">0</strong></div>
+        <div class="card"><span>Total Logs</span><strong id="stat_logs">0</strong></div>
+        <div class="card"><span>Error Logs</span><strong class="danger" id="stat_errors">0</strong></div>
+      </div>
+      <h2>RECENT PRODUCTS</h2>
+      <div class="panel" id="recent_runs"></div>
+    </section>
+
+    <section id="upload" class="tab">
+      <h1>UPLOAD & ANALYZE</h1>
+      <p class="subtitle">Upload images to create Printify product drafts</p>
+
+      <div class="grid2">
+        <div class="panel">
+          <h3>IMAGE UPLOAD</h3>
+          <label>Image file path (local):</label>
+          <input id="image_path" placeholder="C:\\images\\my-design.png" />
+          <div class="row">
+            <button class="primary" id="btn_analyze">ANALYZE IMAGE</button>
+            <button id="btn_queue">QUEUE FOR AUTO FLOW</button>
+          </div>
+          <button class="primary" id="btn_create">CREATE PRODUCT DRAFT</button>
+          <p id="upload_status"></p>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h3>AI ANALYSIS RESULT</h3>
+          </div>
+          <div id="analysis_result" class="mono muted">No analysis yet.</div>
+        </div>
+      </div>
+
+      <div class="panel mt">
+        <h3>PRODUCT CONFIGURATION</h3>
+        <div class="row between align-center">
+          <label><input type="checkbox" id="copy_previous" /> Use same settings for next product</label>
+          <button id="btn_reset">RESET TO DEFAULT</button>
+        </div>
+
+        <h4>PRICING</h4>
+        <div class="row">
+          <input id="base_price" type="number" step="0.01" placeholder="Fixed price e.g. 19.99" />
+          <input id="profit_percent" type="number" step="0.1" placeholder="Profit margin % e.g. 30" />
+        </div>
+        <p id="variant_limit" class="muted"></p>
+        <div class="row">
+          <button id="btn_fetch_variants">FETCH VARIANTS</button>
+          <button id="btn_select_all">SELECT ALL</button>
+          <button id="btn_clear_variants">DESELECT ALL</button>
+        </div>
+        <div id="variants" class="chips"></div>
+
+        <h4>MOCKUPS / PRINT POSITIONS</h4>
+        <button id="btn_fetch_mockups">FETCH MOCKUPS</button>
+        <div id="mockups" class="chips"></div>
+      </div>
+    </section>
+
+    <section id="products" class="tab">
+      <h1>PRODUCTS</h1>
+      <p class="subtitle">Processed images, draft IDs, and status</p>
+      <div class="panel"><pre id="runs_json"></pre></div>
+      <h2>LOGS</h2>
+      <div class="panel"><pre id="logs_json"></pre></div>
+    </section>
+
+    <section id="settings" class="tab">
+      <h1>SETTINGS</h1>
+      <p class="subtitle">Configure API keys and automation settings</p>
+      <div class="grid2">
+        <div class="panel">
+          <h3>PRINTIFY CREDENTIALS</h3>
+          <label>API KEY</label>
+          <input id="printify_api_key" type="password" placeholder="Enter your Printify API key" />
+          <label>SHOP ID</label>
+          <input id="printify_shop_id" placeholder="Your Printify shop ID" />
+        </div>
+        <div class="panel">
+          <h3>PRODUCT CONFIGURATION</h3>
+          <label>BLUEPRINT ID</label>
+          <input id="blueprint_id" type="number" placeholder="e.g., 3" />
+          <label>PRINT PROVIDER ID</label>
+          <input id="print_provider_id" type="number" placeholder="e.g., 5" />
+          <label>WATCH FOLDER (Windows or local path)</label>
+          <input id="watch_folder" placeholder="C:\\folder\\to\\watch" />
+        </div>
+      </div>
+      <div class="row mt">
+        <button class="primary" id="btn_save_settings">SAVE SETTINGS</button>
+        <button id="btn_monitor_start">START MONITORING</button>
+        <button id="btn_monitor_stop">STOP MONITORING</button>
+      </div>
+      <p id="monitor_status"></p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
