@@ -96,9 +96,6 @@ def draft_uploaded(file: UploadFile = File(...), db: Session = Depends(get_db)):
 
         config = ConfigStore(db).get("settings", {})
 
-        if not config.get("blueprint_id") or not config.get("print_provider_id"):
-            return {"error": "Blueprint ID or Print Provider ID missing in settings"}
-
         printify = get_printify_from_config(config)
 
         analysis = ai_service.analyze_image(str(temp_path))
@@ -127,10 +124,7 @@ def draft_uploaded(file: UploadFile = File(...), db: Session = Depends(get_db)):
         }
 
     except Exception as e:
-        return {
-            "error": "Draft creation failed",
-            "details": str(e)
-        }
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ---------------- DASHBOARD ---------------- #
