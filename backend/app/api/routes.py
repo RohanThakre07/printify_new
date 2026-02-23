@@ -30,8 +30,13 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 def get_printify_from_config(config: Dict) -> PrintifyClient:
     key = config.get("printify_api_key") or settings.printify_api_key
     shop = config.get("printify_shop_id") or settings.printify_shop_id
-    if not key or not shop:
-        raise RuntimeError("Printify API key and shop ID are required")
+
+    if not key:
+        raise HTTPException(status_code=400, detail="Missing Printify API Key")
+
+    if not shop:
+        raise HTTPException(status_code=400, detail="Missing Printify Shop ID")
+
     return PrintifyClient(key, shop)
 
 
